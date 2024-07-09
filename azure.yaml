@@ -18,6 +18,7 @@ stages:
         
 - stage: Test # Define a test stage
   dependsOn: Build # Define dependency on the Build stage
+  condition: succeeded() # Only run if the Build stage succeeds
   jobs:
   - job: RunTests # Define a job within the test stage
     pool: # Define the agent pool to run the job on
