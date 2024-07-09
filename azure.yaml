@@ -1,5 +1,5 @@
 trigger:
-- main
+- main  # Ensure this matches the branch name in your GitHub repository
 
 stages:
 - stage: Build # Define a build stage
@@ -10,9 +10,11 @@ stages:
     steps:
     - script: mvn clean install # Run maven clean and install commands
       displayName: 'Build and Install Tests'
-    - publish: 
-        artifact: $(System.DefaultWorkingDirectory)/target/*.jar # Publish the generated JAR file as artifact
-        displayName: 'Publish Artifact'
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(System.DefaultWorkingDirectory)/target'
+        ArtifactName: 'drop'
+        publishLocation: 'Container'
         
 - stage: Test # Define a test stage
   dependsOn: Build # Define dependency on the Build stage
@@ -21,11 +23,12 @@ stages:
     pool: # Define the agent pool to run the job on
       vmImage: 'ubuntu-latest'
     steps:
-    - download: 
-        artifact: $(Build.ArtifactStagingDirectory) # Download the JAR artifact from the Build stage
-        displayName: 'Download Artifact'
+    - download: current
+      artifact: 'drop'
+      displayName: 'Download Artifact'
     - script: mvn test # Run maven test command to execute regression tests
       displayName: 'Run Regression Tests'
-    - publish: 
-        artifact: $(System.DefaultWorkingDirectory)/target/surefire-reports/*.xml # Publish test reports as artifacts
-        displayName: 'Publish Test Reports'
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFiles: '$(System.DefaultWorkingDirectory)/target/surefire-reports/*.xml'
+        testRunTitle: 'Maven Test Results'
